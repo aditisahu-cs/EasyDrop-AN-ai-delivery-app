@@ -1,0 +1,6 @@
+{
+  "name": "EasyDrop Delivery & Smart Dispatch",
+  "description": "Smart doorstep delivery booking and dispatch platform featuring Drop AI assistant, ML slot recommendations, demand forecasting, and address normalization.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
