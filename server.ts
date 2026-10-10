@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ path: ['.env.local', '.env'] });
 
 import express from 'express';
 import type { Request, Response } from 'express';
@@ -15,6 +15,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = parseInt(process.env.PORT || '3000', 10);
+const GEMINI_MODEL = 'gemini-2.5-flash';
 
 app.use(express.json());
 
@@ -319,7 +320,7 @@ STRICT INSTRUCTIONS:
     contents.push({ role: 'user', parts: [{ text: cleanUserMsg }] });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: GEMINI_MODEL,
       contents,
       config: {
         systemInstruction,
@@ -453,7 +454,7 @@ STRICT INSTRUCTIONS:
 
       // Generate conversational completion with the tool results
       const finalResponse = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
+        model: GEMINI_MODEL,
         contents: [
           ...contents,
           { role: 'model', parts: [{ text: `Executed database operations:\n${toolResultContext}` }] },
@@ -529,7 +530,7 @@ app.post('/api/gemini/normalize-address', async (req: Request, res: Response) =>
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: GEMINI_MODEL,
       contents: `Normalize and standardize this doorstep delivery address for an autonomous robotics delivery system. 
 Correct spelling, expand abbreviations according to postal standards (e.g. Trce -> Terrace, Ave -> Avenue), format apartment/unit numbers clearly, and verify city/state/postal code.
 Privacy constraint: Analyze ONLY the geographic address string below.

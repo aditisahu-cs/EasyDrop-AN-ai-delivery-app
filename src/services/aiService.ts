@@ -14,28 +14,17 @@ export async function sendDropBotMessage(
   currentLanguage: 'en' | 'hi' = 'en',
   messages: Array<{ sender: string; text: string }> = []
 ): Promise<ChatResponsePayload> {
-  try {
-    const res = await fetch('/api/gemini/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userMessage, currentLanguage, messages }),
-    });
+  const res = await fetch('/api/gemini/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userMessage, currentLanguage, messages }),
+  });
 
-    if (!res.ok) {
-      throw new Error(`Server returned ${res.status}`);
-    }
-
-    return await res.json();
-  } catch (err: any) {
-    console.warn('DropBot API fallback:', err);
-    const isHindi = currentLanguage === 'hi' || /[\u0900-\u097F]/.test(userMessage);
-    return {
-      reply: isHindi
-        ? 'नमस्ते! मैं DropBot हूँ (ऑटोनॉमस रोबोटिक्स सहायक)। मैं स्लॉट उपलब्धता की जांच कर सकता हूँ और आपके लिए डिलीवरी बुक या रद्द कर सकता हूँ।'
-        : "Hello! I am DropBot, your EasyDrop autonomous robotics delivery dispatcher. I can check slot availability, book or cancel deliveries, and share live robotics rover telemetry.",
-      toolExecutions: [],
-    };
+  if (!res.ok) {
+    throw new Error(`Chat service returned ${res.status}`);
   }
+
+  return await res.json();
 }
 
 /**
