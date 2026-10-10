@@ -174,21 +174,17 @@ STRICT INSTRUCTIONS:
 
       // 1. Check for Order Tracking request
       const bookingMatch = cleanUserMsg.match(/ED-\d{4}/i);
+      const isCancellationRequest = lower.includes('cancel') || lower.includes('रद्द');
+      const isBookingRequest =
+        /\b(book|schedule|reserve)\b/.test(lower) || lower.includes('बुक') || lower.includes('आरक्षित');
       const isTrackingRequest =
         Boolean(bookingMatch) ||
-        lower.includes('track') ||
-        lower.includes('status') ||
-        lower.includes('where is') ||
-        lower.includes('order') ||
-        lower.includes('parcel') ||
-        lower.includes('delivery') ||
+        /\b(track|tracking|status|where is|where's|where are|locate|find)\b/.test(lower) ||
         lower.includes('ट्रैक') ||
         lower.includes('स्थिति') ||
-        lower.includes('कहाँ') ||
-        lower.includes('पार्सल') ||
-        lower.includes('ऑर्डर');
+        lower.includes('कहाँ');
 
-      if (isTrackingRequest) {
+      if (isTrackingRequest && !isCancellationRequest && !isBookingRequest) {
         const queryToSearch = bookingMatch ? bookingMatch[0].toUpperCase() : cleanUserMsg;
         let matched = bookingMatch ? sqliteDb.getBookingById(queryToSearch) : null;
 
@@ -220,24 +216,37 @@ STRICT INSTRUCTIONS:
             ? `क्षमा करें, मुझे इस विवरण से कोई ऑर्डर नहीं मिला। आप **ED-4821**, **ED-4801**, या **ED-4819** जैसे ऑर्डर कोड के साथ पुनः प्रयास कर सकते हैं।`
             : `I could not locate an order matching "${cleanUserMsg}". You can try searching by booking reference, e.g. **ED-4821**, **ED-4801**, or **ED-4819**.`;
         }
-      } else if (lower.includes('cancel') || lower.includes('रद्द')) {
-        const foundRef = bookingMatch ? bookingMatch[0].toUpperCase() : 'ED-4821';
-        const cancelled = sqliteDb.cancelBooking(foundRef);
-        if (cancelled) {
-          toolExecutions.push({
-            tool: 'cancel_delivery_slot',
-            input: { bookingRef: foundRef },
-            output: { success: true, bookingRef: foundRef, booking: cancelled },
-          });
+      } else if (isCancellationRequest) {
+        const foundRef = bookingMatch?.[0].toUpperCase();
+        if (!foundRef) {
           reply = isHindi
-            ? `बुकिंग ${foundRef} सफलतापूर्वक डेटाबेस में रद्द कर दी गई है! आपकी स्लॉट क्षमता वापस पूल में जोड़ दी गई है।`
-            : `Booking ${foundRef} has been cancelled in the database. The autonomous dispatch has been halted and slot capacity released.`;
+            ? 'कृपया रद्द करने के लिए अपना बुकिंग कोड (जैसे ED-4821) बताएं।'
+            : 'Please provide your booking reference (e.g. ED-4821) so I can cancel the correct delivery.';
         } else {
-          reply = isHindi
-            ? `कृपया मुझे अपना बुकिंग कोड बताएं (जैसे ED-4821) ताकि मैं इसे डेटाबेस से रद्द कर सकूं।`
-            : `Please provide your booking reference code (e.g. ED-4821) so I can cancel the delivery in the database.`;
+          const cancelled = sqliteDb.cancelBooking(foundRef);
+          if (cancelled) {
+            toolExecutions.push({
+              tool: 'cancel_delivery_slot',
+              input: { bookingRef: foundRef },
+              output: { success: true, bookingRef: foundRef, booking: cancelled },
+            });
+            reply = isHindi
+              ? `बुकिंग ${foundRef} सफलतापूर्वक डेटाबेस में रद्द कर दी गई है! आपकी स्लॉट क्षमता वापस पूल में जोड़ दी गई है।`
+              : `Booking ${foundRef} has been cancelled in the database. The autonomous dispatch has been halted and slot capacity released.`;
+          } else {
+            reply = isHindi
+              ? `कृपया मुझे अपना बुकिंग कोड बताएं (जैसे ED-4821) ताकि मैं इसे डेटाबेस से रद्द कर सकूं।`
+              : `Please provide your booking reference code (e.g. ED-4821) so I can cancel the delivery in the database.`;
+          }
         }
-      } else if (lower.includes('slot') || lower.includes('उपलब्ध') || lower.includes('खाली') || lower.includes('tomorrow') || lower.includes('कल')) {
+      } else if (
+        !isBookingRequest &&
+        (lower.includes('slot') ||
+          lower.includes('उपलब्ध') ||
+          lower.includes('खाली') ||
+          lower.includes('tomorrow') ||
+          lower.includes('कल'))
+      ) {
         const targetDate = resolveDateKey(cleanUserMsg);
         const slots = sqliteDb.getSlotsForDate(targetDate);
         toolExecutions.push({
@@ -253,11 +262,23 @@ STRICT INSTRUCTIONS:
         reply = isHindi
           ? `दिनांक ${targetDate} के लिए स्लॉट उपलब्धता:\n• सुबह (08:00 AM – 12:00 PM): ${mFree} स्लॉट खाली (${slots.morning.bookedCount}/${slots.morning.maxCapacity} भरे)\n• दोपहर (12:00 PM – 04:00 PM): ${aFree} स्लॉट खाली (${slots.afternoon.bookedCount}/${slots.afternoon.maxCapacity} भरे) — अनुशंसित!\n• शाम (04:00 PM – 08:00 PM): ${eFree} स्लॉट खाली (${slots.evening.bookedCount}/${slots.evening.maxCapacity} भरे)\n\nक्या आप इनमें से कोई स्लॉट आरक्षित करना चाहते हैं?`
           : `Slot availability for ${targetDate}:\n• Morning (08:00 AM – 12:00 PM): ${mFree} spots available (${slots.morning.bookedCount}/${slots.morning.maxCapacity} booked)\n• Afternoon (12:00 PM – 04:00 PM): ${aFree} spots available (${slots.afternoon.bookedCount}/${slots.afternoon.maxCapacity} booked) — Eco-Rover Optimized!\n• Evening (04:00 PM – 08:00 PM): ${eFree} spots available (${slots.evening.bookedCount}/${slots.evening.maxCapacity} booked)\n\nWould you like me to book one of these windows for you?`;
-      } else if (lower.includes('book') || lower.includes('बुक')) {
+      } else if (isBookingRequest) {
         reply = isHindi
           ? `मैं आपके लिए रोबोटिक्स डिलीवरी बुक कर सकता हूँ! कृपया मुझे अपना डिलीवरी पता और पसंदीदा समय (सुबह, दोपहर, शाम) बताएं। (कड़ा नियम: मैं कभी भी भरे हुए स्लॉट को बुक नहीं करूंगा)।`
           : `I can book an autonomous robotics delivery for you! Please share your delivery address and preferred window (Morning, Afternoon, or Evening). Note: As a strict rule, I will never book a full slot.`;
-      } else if (lower.includes('how') || lower.includes('rover') || lower.includes('काम') || lower.includes('rain') || lower.includes('weather') || lower.includes('सुरक्षित')) {
+      } else if (
+        lower.includes('how') ||
+        lower.includes('rover') ||
+        lower.includes('delivery') ||
+        lower.includes('autonomous') ||
+        lower.includes('robot') ||
+        lower.includes('rain') ||
+        lower.includes('weather') ||
+        lower.includes('locker') ||
+        lower.includes('lidar') ||
+        lower.includes('काम') ||
+        lower.includes('सुरक्षित')
+      ) {
         reply = isHindi
           ? `🤖 **EasyDrop ऑटोनॉमस डिलीवरी रोबोटिक्स के बारे में:**\n\n• **सटीक ट्रैकिंग:** रोवर 360° LIDAR और HD स्टीरियो कैमरों से सुरक्षित रूप से फुटपाथ पर चलता है।\n• **मौसम सुरक्षा:** सभी रोवर पूरी तरह वेदरप्रूफ और IP67 सील्ड कम्पार्टमेंट के साथ आते हैं।\n• **सुरक्षित अनलॉकिंग:** आपके दरवाजे पर पहुंचने पर रोवर आपके मोबाइल पर सुरक्षित वन-टाइम कोड भेजता है या पोर्च लॉकर में पार्सल छोड़ता है।\n• **शून्य उत्सर्जन:** 100% इलेक्ट्रिक और पर्यावरण के अनुकूल!`
           : `🤖 **About EasyDrop Autonomous Delivery Rovers:**\n\n• **Precision Navigation:** Our rovers utilize 360° LIDAR, ultrasonic sensors, and pedestrian AI to safely travel along sidewalks at walking speed.\n• **Weather Sealed:** Temperature-monitored, IP67 sealed cargo compartment protects packages from heavy rain, snow, and moisture.\n• **Secure Contactless Handoff:** Unlocks only via your mobile app OTP or places parcels directly into authorized porch lockers.\n• **Zero Emissions:** 100% clean electric rovers reduce local urban traffic congestion.`;
