@@ -126,8 +126,8 @@ export const DropBotChatModal: React.FC<DropBotChatModalProps> = ({
           sender: 'drop',
           text:
             language === 'hi'
-              ? 'क्षमा करें, DropBot सेवा से संपर्क नहीं हो सका। सर्वर चालू है या नहीं जांचें और फिर से प्रयास करें।'
-              : 'Sorry, DropBot could not reach its chat service. Check that the app server is running and try again.',
+              ? 'क्षमा करें, नेटवर्क अनुरोध विफल रहा। कृपया पुनः प्रयास करें।'
+              : 'Sorry, communication with dispatch was disrupted. Please try again.',
           timestamp: 'Now',
         },
       ]);
