@@ -43,6 +43,7 @@ export default function App() {
 
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
   const [lastConfirmedBooking, setLastConfirmedBooking] = useState<Booking | null>(INITIAL_BOOKINGS[0]);
+  const [focusedBookingId, setFocusedBookingId] = useState<string | undefined>(undefined);
 
   // Load live bookings from SQLite database on mount
   useEffect(() => {
@@ -243,6 +244,7 @@ export default function App() {
           <DeliveriesView
             bookings={bookings}
             days={days}
+            selectedBookingIdProp={focusedBookingId}
             onCancelBooking={handleCancelBooking}
             onRescheduleBooking={b => {
               setCurrentTab('book');
@@ -312,6 +314,7 @@ export default function App() {
           }
         }}
         onNavigateToTracking={bookingId => {
+          setFocusedBookingId(bookingId);
           setCurrentTab('tracking');
           setIsChatOpen(false);
         }}

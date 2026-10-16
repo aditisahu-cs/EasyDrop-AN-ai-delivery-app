@@ -7,6 +7,7 @@ import { trackOrderOnServer } from '../services/aiService';
 interface DeliveriesViewProps {
   bookings: Booking[];
   days?: DaySlotInfo[];
+  selectedBookingIdProp?: string;
   onSelectBooking?: (b: Booking) => void;
   onCancelBooking: (id: string) => void;
   onRescheduleBooking: (b: Booking) => void;
@@ -15,12 +16,13 @@ interface DeliveriesViewProps {
 export const DeliveriesView: React.FC<DeliveriesViewProps> = ({
   bookings,
   days = INITIAL_7_DAYS,
+  selectedBookingIdProp,
   onSelectBooking,
   onCancelBooking,
   onRescheduleBooking,
 }) => {
   const [selectedBookingId, setSelectedBookingId] = useState<string>(
-    bookings[0]?.id || 'ED-4821'
+    selectedBookingIdProp || bookings[0]?.id || 'ED-4821'
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -36,6 +38,16 @@ export const DeliveriesView: React.FC<DeliveriesViewProps> = ({
   const [selectedDateKey, setSelectedDateKey] = useState<string>(
     activeBooking?.dateKey || days[1]?.dateString || '2025-10-24'
   );
+
+  React.useEffect(() => {
+    if (selectedBookingIdProp) {
+      setSelectedBookingId(selectedBookingIdProp);
+      const match = bookings.find(b => b.id.toUpperCase() === selectedBookingIdProp.toUpperCase());
+      if (match) {
+        setSelectedDateKey(match.dateKey);
+      }
+    }
+  }, [selectedBookingIdProp, bookings]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

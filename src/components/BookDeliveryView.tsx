@@ -95,7 +95,7 @@ export const BookDeliveryView: React.FC<BookDeliveryViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-semibold flex items-center gap-1 shadow-xs">
+          <div className="hidden sm:flex px-3 py-1 rounded-full bg-amber-50 text-amber-900 border border-amber-200 text-xs font-semibold items-center gap-1 shadow-xs">
             <span className="material-symbols-outlined text-[14px] text-amber-700">lock_reset</span>
             <span>Strict Rule-Based Capacity Engine</span>
           </div>

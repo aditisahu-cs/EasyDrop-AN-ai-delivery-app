@@ -126,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Admin shortcut for mobile */}
           <button
             onClick={() => onSelectTab(currentTab === 'admin' ? 'book' : 'admin')}
-            className="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 flex items-center justify-center border border-emerald-200 transition-all"
+            className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center border border-slate-200 transition-all"
             title="Dispatcher Portal"
           >
             <span className="material-symbols-outlined text-[19px]">tune</span>

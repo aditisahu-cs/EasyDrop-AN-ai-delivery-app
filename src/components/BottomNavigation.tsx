@@ -13,10 +13,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 }) => {
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-lg pb-safe">
-      <div className="flex justify-around items-center h-16 px-3">
+      <div className="flex justify-around items-center h-16 px-2">
         <button
           onClick={() => onSelectTab('book')}
-          className={`flex flex-col items-center justify-center min-w-[64px] py-1 transition-all ${
+          className={`flex flex-col items-center justify-center min-w-[56px] py-1 transition-all ${
             currentTab === 'book' ? 'text-emerald-700 font-bold' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -26,7 +26,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
         <button
           onClick={() => onSelectTab('tracking')}
-          className={`flex flex-col items-center justify-center min-w-[64px] py-1 transition-all ${
+          className={`flex flex-col items-center justify-center min-w-[56px] py-1 transition-all ${
             currentTab === 'tracking' ? 'text-emerald-700 font-bold' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -36,7 +36,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
         <button
           onClick={() => onSelectTab('admin')}
-          className={`flex flex-col items-center justify-center min-w-[64px] py-1 transition-all ${
+          className={`flex flex-col items-center justify-center min-w-[56px] py-1 transition-all ${
             currentTab === 'admin' ? 'text-emerald-700 font-bold' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -46,7 +46,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
         <button
           onClick={onOpenChat}
-          className="flex flex-col items-center justify-center min-w-[64px] py-1 text-slate-800 hover:text-emerald-700 transition-all group"
+          className="flex flex-col items-center justify-center min-w-[56px] py-1 text-slate-800 hover:text-emerald-700 transition-all group"
         >
           <div className="w-6 h-6 rounded-full bg-slate-900 text-emerald-400 flex items-center justify-center text-[13px] group-hover:scale-110 transition-transform">
             <span className="material-symbols-outlined text-[15px]">smart_toy</span>

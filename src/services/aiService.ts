@@ -14,17 +14,73 @@ export async function sendDropBotMessage(
   currentLanguage: 'en' | 'hi' = 'en',
   messages: Array<{ sender: string; text: string }> = []
 ): Promise<ChatResponsePayload> {
-  const res = await fetch('/api/gemini/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userMessage, currentLanguage, messages }),
-  });
+  try {
+    const res = await fetch('/api/gemini/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userMessage, currentLanguage, messages }),
+    });
 
-  if (!res.ok) {
-    throw new Error(`Chat service returned ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`Server returned ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err: any) {
+    console.warn('DropBot API fallback:', err);
+    const isHindi = currentLanguage === 'hi' || /[\u0900-\u097F]/.test(userMessage);
+
+    // If order reference mentioned, attempt direct tracking
+    const bookingMatch = userMessage.match(/ED-\d{4}/i);
+    if (bookingMatch) {
+      try {
+        const trackRes = await trackOrderOnServer(bookingMatch[0]);
+        if (trackRes.found && trackRes.booking) {
+          const b = trackRes.booking;
+          return {
+            reply: isHindi
+              ? `📦 **ऑर्डर #${b.id} की लाइव ट्रैकिंग स्थिति:**\n\n• स्थिति: ${b.status}\n• प्राप्तकर्ता: ${b.customerName}\n• अनुमानित आगमन: ${b.eta} (${b.date})\n• ऑटोनॉमस रोवर: ${b.courierName || 'Rover Bot Alpha'} (${b.courierVehicle || 'ED-V-882'})\n• पता: ${b.address}`
+              : `📦 **Live Autonomous Tracking for Order #${b.id}:**\n\n• Status: ${b.status}\n• Recipient: ${b.customerName}\n• Estimated ETA: ${b.eta} (${b.date})\n• Assigned Rover: ${b.courierName || 'Rover Bot Alpha'} (${b.courierVehicle || 'ED-V-882'})\n• Delivery Address: ${b.address}`,
+            toolExecutions: [
+              {
+                tool: 'track_order',
+                input: { searchQuery: b.id },
+                output: { success: true, booking: b },
+              },
+            ],
+          };
+        }
+      } catch (trackErr) {
+        console.warn('Direct track fallback error:', trackErr);
+      }
+    }
+
+    const lower = userMessage.toLowerCase();
+    if (lower.includes('rain') || lower.includes('बारिश')) {
+      return {
+        reply: isHindi
+          ? '🌧️ EasyDrop के सभी ऑटोनॉमस रोवर IP67 सील्ड वाटरप्रूफ कम्पार्टमेंट और हाइड्रोफोबिक 360° LIDAR लेंस से लैस हैं। भारी बारिश में भी आपके पार्सल पूरी तरह सूखे और सुरक्षित रहते हैं।'
+          : '🌧️ All EasyDrop rovers feature IP67 hermetically sealed cargo compartments and hydrophobic sensor lenses. Packages remain completely dry and safe in heavy rain and snow.',
+        toolExecutions: [],
+      };
+    }
+
+    if (lower.includes('how') || lower.includes('rover') || lower.includes('robot') || lower.includes('काम')) {
+      return {
+        reply: isHindi
+          ? '🤖 EasyDrop ऑटोनॉमस रोवर 360° LIDAR और अल्ट्रासोनिक सेंसर्स का उपयोग कर सुरक्षित रूप से फुटपाथ पर 3-4 मील प्रति घंटे की गति से चलते हैं और आपके दरवाजे पर वन-टाइम पिन से अनलॉक होते हैं।'
+          : '🤖 EasyDrop rovers cruise safely on sidewalks at 3–4 mph using 360° LiDAR and obstacle-avoidance AI, unlocking via one-time app PIN code or depositing into smart porch lockers.',
+        toolExecutions: [],
+      };
+    }
+
+    return {
+      reply: isHindi
+        ? 'नमस्ते! मैं DropBot हूँ (ऑटोनॉमस रोबोटिक्स डिस्पैच असिस्टेंट)। मैं ऑर्डर्स ट्रैक कर सकता हूँ (उदा. ED-4821), स्लॉट उपलब्धता जांच सकता हूँ और रोबोटिक्स डिलीवरी बुक या रद्द कर सकता हूँ।'
+        : "Hello! I am DropBot, EasyDrop's autonomous robotics dispatcher. I can track deliveries (e.g. ED-4821), check slot availability, and book or cancel autonomous deliveries.",
+      toolExecutions: [],
+    };
   }
-
-  return await res.json();
 }
 
 /**

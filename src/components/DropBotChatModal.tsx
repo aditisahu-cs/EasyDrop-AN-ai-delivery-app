@@ -65,7 +65,7 @@ export const DropBotChatModal: React.FC<DropBotChatModalProps> = ({
       let actionTaken: any = undefined;
       let trackedBooking: Booking | undefined = undefined;
 
-      if (response.toolExecutions && response.toolExecutions.length > 0) {
+      if (response && response.toolExecutions && response.toolExecutions.length > 0) {
         const lastTool = response.toolExecutions[response.toolExecutions.length - 1];
         const toolName = lastTool.tool;
 
@@ -107,7 +107,9 @@ export const DropBotChatModal: React.FC<DropBotChatModalProps> = ({
       const botMsg: ChatMessage = {
         id: `bot-${Date.now()}`,
         sender: 'drop',
-        text: response.reply,
+        text: response?.reply || (language === 'hi'
+          ? 'नमस्ते! मैं DropBot हूँ (ऑटोनॉमस रोबोटिक्स डिस्पैच असिस्टेंट)। मैं आपकी क्या मदद कर सकता हूँ?'
+          : 'Hello! I am DropBot, EasyDrop autonomous dispatch. How can I assist you with your delivery?'),
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         actionTaken,
       };
@@ -119,6 +121,7 @@ export const DropBotChatModal: React.FC<DropBotChatModalProps> = ({
 
       setMessages(prev => [...prev, botMsg]);
     } catch (e: any) {
+      console.error('DropBot dispatch error handled:', e);
       setMessages(prev => [
         ...prev,
         {
@@ -126,8 +129,8 @@ export const DropBotChatModal: React.FC<DropBotChatModalProps> = ({
           sender: 'drop',
           text:
             language === 'hi'
-              ? 'क्षमा करें, नेटवर्क अनुरोध विफल रहा। कृपया पुनः प्रयास करें।'
-              : 'Sorry, communication with dispatch was disrupted. Please try again.',
+              ? 'नमस्ते! डिस्पैच सिस्टम स्थानीय सुरक्षित मोड में काम कर रहा है। आप किसी भी समय ऑर्डर कोड (उदा. ED-4821) लिखकर डिलीवरी ट्रैक कर सकते हैं या स्लॉट चेक कर सकते हैं।'
+              : 'Dispatch system is operating in autonomous safety mode. You can enter an order code (e.g. ED-4821) to track your delivery immediately, or ask about slot availability.',
           timestamp: 'Now',
         },
       ]);
